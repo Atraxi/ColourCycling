@@ -70,16 +70,18 @@ public class Main
             JSONArray pixelsJSON = json.getJSONArray("pixels");
             System.out.println("Pixels length: " + pixelsJSON.length());
 
-            Color[] colorsDirty = colors.clone();
+            Color[] colorsDirty;
             long dirtyCount = 0;
             long endPoint = 30000;//lcm;
-            for(long i = 0; i < endPoint; i+=1)
+            for(long i = 0; i < endPoint; i+=50)
             {
+                colorsDirty = colors.clone();
                 if(i % 100 == 0) { System.out.println("progress:"+((i*100)/endPoint)+"%"); }
                 boolean dirty = false;
-                for(Cycle cycle : cycles)
+                for(int i1 = 0; i1 < cycles.length; i1++)
                 {
-                    dirty = dirty || cycle.cycle(colorsDirty, i);
+                    Cycle cycle = cycles[i1];
+                    dirty = cycle.cycle(colorsDirty, i) || dirty;
                 }
 //                writer.writeToSequence(render(pixelsJSON, width, height, colorsDirty));
                 if(dirty)

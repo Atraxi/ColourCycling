@@ -9,7 +9,7 @@ public class Cycle
 {
     private static final int CYCLE_SPEED = 280;
     private static final int PRECISION = 100;
-    private static final boolean USE_BLEND_SHIFT = false;
+    private static final boolean USE_BLEND_SHIFT = true;
     private double reverse;
     private double rate;
     private double low;
@@ -149,19 +149,18 @@ public class Cycle
 
     private static Color fadeColor(Color sourceColor, Color destColor, double frame, int max)
     {
-        throw new RuntimeException("fadeColor() not implemented");
-//        // fade one color into another by a partial amount, return new color in between
-//        Color tempColor = new Color();
-//
-//        if(max == 0) return sourceColor; // avoid divide by zero
-//        if(frame < 0) frame = 0;
-//        if(frame > max) frame = max;
-//
-//        tempColor.red = Math.floor(sourceColor.red + (((destColor.red - sourceColor.red) * frame) / max));
-//        tempColor.green = Math.floor(sourceColor.green + (((destColor.green - sourceColor.green) * frame) / max));
-//        tempColor.blue = Math.floor(sourceColor.blue + (((destColor.blue - sourceColor.blue) * frame) / max));
-//
-//        return (tempColor);
+        // fade one color into another by a partial amount, return new color in between
+        Color tempColor;
+
+        if(max == 0) return sourceColor; // avoid divide by zero
+        if(frame < 0) frame = 0;
+        if(frame > max) frame = max;
+
+        tempColor = new Color((int)Math.floor(sourceColor.getRed() + (((destColor.getRed() - sourceColor.getRed()) * frame) / max)),
+                              (int)Math.floor(sourceColor.getGreen() + (((destColor.getGreen() - sourceColor.getGreen()) * frame) / max)),
+                              (int)Math.floor(sourceColor.getBlue() + (((destColor.getBlue() - sourceColor.getBlue()) * frame) / max)));
+
+        return (tempColor);
     }
 
     private static double DFLOAT_MOD(double a, double b)
