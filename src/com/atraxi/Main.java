@@ -9,18 +9,21 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 
 public class Main
 {
     public static void main(String[] args) throws IOException
     {
-        for(String arg : args)
+        for(int i1 = 5, argsLength = args.length; i1 < argsLength; i1++)
         {
+            String arg = args[i1];
             System.out.println(System.lineSeparator() + "File: " + arg);
+            URL url = new URL("http://www.effectgames.com/demos/canvascycle/image.php?file=" + arg);
             StringBuilder builder = new StringBuilder();
-            try(BufferedReader reader = new BufferedReader(new FileReader(new File(arg))))
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream())))
             {
                 String data = reader.readLine();
                 while(data != null)
@@ -29,6 +32,7 @@ public class Main
                     data = reader.readLine();
                 }
             }
+            builder.delete(0, builder.indexOf("{")).delete(builder.lastIndexOf("}") + 1, builder.length());
             JSONObject json = new JSONObject(builder.toString());
             int width = json.getInt("width");
             int height = json.getInt("height");
@@ -62,43 +66,29 @@ public class Main
             System.out.println("LCM: " + lcm);
 
             // create a new BufferedOutputStream with the last argument
-            ImageOutputStream output = new FileImageOutputStream(new File(arg + "3.gif"));
+            ImageOutputStream output = new FileImageOutputStream(new File(arg + ".gif"));
             // create a gif sequence with the type of the first image, 1 second
             // between frames, which loops continuously
-            GifSequenceWriter writer = new GifSequenceWriter(output, BufferedImage.TYPE_INT_RGB, 50, false);
+            GifSequenceWriter writer = new GifSequenceWriter(output, BufferedImage.TYPE_INT_RGB, 50, false);//50 ms/frame = 20fps
 
             JSONArray pixelsJSON = json.getJSONArray("pixels");
             System.out.println("Pixels length: " + pixelsJSON.length());
 
             Color[] colorsDirty;
-            long dirtyCount = 0;
-            long endPoint = 30000;//lcm;
-            for(long i = 0; i < endPoint; i+=50)
+            //How many milliseconds the gif should run for, or lcm for a perfect loop (lcm can be over 100 million though, so be careful)
+            long endPoint = 60_000;//Math.min(60_000, lcm);
+            for(long i = 0; i < endPoint; i += 50)//gif will play at 50ms/frame, i simulates ms elapsed
             {
                 colorsDirty = colors.clone();
-                if(i % 100 == 0) { System.out.println("progress:"+((i*100)/endPoint)+"%"); }
-                boolean dirty = false;
-                for(int i1 = 0; i1 < cycles.length; i1++)
+                if(i % 10_000 == 0) { System.out.println("progress:" + ((i * 100) / endPoint) + "%"); }
+                for(Cycle cycle : cycles)
                 {
-                    Cycle cycle = cycles[i1];
-                    dirty = cycle.cycle(colorsDirty, i) || dirty;
+                    cycle.cycle(colorsDirty, i);
                 }
-//                writer.writeToSequence(render(pixelsJSON, width, height, colorsDirty));
-                if(dirty)
-                {
-                    writer.writeToSequence(render(pixelsJSON, width, height, colorsDirty));
-                    dirtyCount++;
-                }
+                writer.writeToSequence(render(pixelsJSON, width, height, colorsDirty));
             }
-            System.out.println("dirtyCount: " + dirtyCount);
             writer.close();
             output.close();
-
-//            BufferedImage imageClean = render(json.getJSONArray("pixels"), width, height, colors);
-//            BufferedImage imageDirty = render(json.getJSONArray("pixels"), width, height, colorsDirty);
-//            System.out.println("Are images equal?: " + compareImages(imageClean, imageDirty));
-//            ImageIO.write(imageClean, "png", new File(arg + "CLEAN.png"));
-//            ImageIO.write(imageDirty, "png", new File(arg + "DIRTY.png"));
         }
     }
 
