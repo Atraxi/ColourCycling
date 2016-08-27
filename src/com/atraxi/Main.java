@@ -8,7 +8,11 @@ import javax.imageio.stream.ImageOutputStream;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -17,13 +21,13 @@ public class Main
 {
     public static void main(String[] args) throws IOException
     {
-        for(int i1 = 5, argsLength = args.length; i1 < argsLength; i1++)
+        int start = 0;
+        int end = args.length;
+        for(int i1 = start; i1 < end; i1++)
         {
             String arg = args[i1];
-            System.out.println(System.lineSeparator() + "File: " + arg);
-            URL url = new URL("http://www.effectgames.com/demos/canvascycle/image.php?file=" + arg);
             StringBuilder builder = new StringBuilder();
-            try(BufferedReader reader = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream())))
+            try(BufferedReader reader = new BufferedReader(new FileReader(new File("data/" + arg + ".gif"))))
             {
                 String data = reader.readLine();
                 while(data != null)
@@ -32,7 +36,28 @@ public class Main
                     data = reader.readLine();
                 }
             }
-            builder.delete(0, builder.indexOf("{")).delete(builder.lastIndexOf("}") + 1, builder.length());
+            catch(FileNotFoundException e)
+            {
+                System.out.println("\nLocal copy of " + arg + " not found, downloading");
+                URL url = new URL("http://www.effectgames.com/demos/canvascycle/image.php?file=" + arg);
+                try(BufferedReader reader = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream())))
+                {
+                    String data = reader.readLine();
+                    while(data != null)
+                    {
+                        builder.append(data);
+                        data = reader.readLine();
+                    }
+                }
+                builder.delete(0, builder.indexOf("{")).delete(builder.lastIndexOf("}") + 1, builder.length());
+
+                try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("data/" + arg + ".gif"))))
+                {
+                    writer.write(builder.toString());
+                }
+            }
+
+            System.out.println(System.lineSeparator() + "File: " + arg);
             JSONObject json = new JSONObject(builder.toString());
             int width = json.getInt("width");
             int height = json.getInt("height");
